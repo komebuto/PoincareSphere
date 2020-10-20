@@ -1,0 +1,6 @@
+*.jpg
+*.sh
+Makefile
+*.exe
+tmp/
+.vscode/
