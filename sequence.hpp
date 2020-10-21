@@ -122,6 +122,7 @@ int split(char* dst[], char* src, char delim);
 BOOL key_interrupt(char hit, HANDLE hDevice, dvcBufStruct bufS, int nCurrentBuffer, Region* rFocus);
 void parseCmdLine(HANDLE hDevice, int argc, char* argv[],  Region* rSee, int start);
 void mouse_callback(int event, int x, int y, int flags, void *userdata);
+void mouse_interrupt(Region* rFocus, Mat* pimg, char isClick);
 
 BOOL acquire_picture(Handles* pHandles, int* nCurrentBuffer);
 

@@ -406,3 +406,52 @@ void mouse_callback(int event, int x, int y, int flags, void *userdata)
 
 	return;
 }
+
+void mouse_interrupt(Region* rFocus, Mat* pimg, char isClick)
+{
+	if (isClick) {
+        Mat draw_img;
+        char side = isClick;
+        int depth;
+
+        if (side == 'L') depth = 200;
+        else if (side == 'R') depth = 100;
+ 
+        int key = 0;
+        Region* tmp = rFocus->end();
+        tmp->next = (Region*)calloc(1, sizeof(Region));
+        for (;;) {
+		    if (isClick) {
+                draw_img = pimg->clone();
+		        rectangle(draw_img, rectangle_value, depth, 1, CV_AA);
+		    }
+		    imshow(WINDOW_NAME, draw_img);
+		    // qキーが押されたら終了
+            key = waitKey(1);
+            if (key == 'w') {
+                tmp->next->set(xa_g, xb_g, ya_g, yb_g);
+                if (side == 'L') tmp->next->kind = R_TARGET;
+                else if (side == 'R') tmp->next->kind = R_REFERENCE;
+                break;
+            }
+                
+            else if (key == 'r') {
+                tmp->next->set(xa_g, xb_g, ya_g, yb_g);
+                tmp->next->kind = R_REFERENCE;
+                break;
+            }
+
+            else if (key == 't') {
+                tmp->next->set(xa_g, xb_g, ya_g, yb_g);
+                tmp->next->kind = R_TARGET;
+                break;
+            }
+
+		    else if (key == 'q') {
+        		draw_img = pimg->clone();
+                tmp->next = NULL;
+                break;
+		    }
+        }
+    } 
+}

@@ -56,6 +56,7 @@ void show(dvcBufStruct bufS, int nCurrentBuffer, Region* rFocus, Mat* pimg) {
     unsigned char* tmp_buf = (unsigned char*)calloc(1, (yM-ym)*(xM-xm)*sizeof(unsigned char));
 
     // ! loop1  time consuming (about 1/3 of whole time)
+    // copy pBuffer to tmp_buf, converting from USHORT to unsigned char
     t0 = clock();
     for (int y = ym; y < yM; ++y) {
         for (int x = xm; x < xM; ++x) {
@@ -72,6 +73,7 @@ void show(dvcBufStruct bufS, int nCurrentBuffer, Region* rFocus, Mat* pimg) {
     ostringstream text;
 
     // * loop2 ()
+    // put text indicating the number and kind of focused region
     t0 = clock();
 	for (Region* tmp=rFocus->next; tmp; tmp=tmp->next) {
         
@@ -92,6 +94,7 @@ void show(dvcBufStruct bufS, int nCurrentBuffer, Region* rFocus, Mat* pimg) {
     loop2 += clock() - t0;
 		
     // ! loop3  time consuming (about 1/2 of whole time)
+    // show image using data constructed in loop 1 & 2
     t0 = clock();
 	imshow(WINDOW_NAME, *pimg);
 	waitKey(1);
@@ -159,7 +162,7 @@ BOOL grabRingBuffer(HANDLE hDevice, int nBuffers, Region* rFocus, int call)
     char hit;
 	BOOL bRC = TRUE;
     
-    bool isClick = false;
+    char isClick = NULL;
     int key;
     Region* tmp;
 
@@ -217,54 +220,10 @@ BOOL grabRingBuffer(HANDLE hDevice, int nBuffers, Region* rFocus, int call)
             bufS.pBufferStatus[nCurrentBuffer] = 0 ;
 
         }
-
-        cv::setMouseCallback(WINDOW_NAME, mouse_callback, &isClick);
-	    if (isClick) {
-            Mat draw_img;
-            char side = isClick;
-            int depth;
-
-            if (side == 'L') depth = 200;
-            else if (side == 'R') depth = 100;
- 
-            key = 0;
-            for (tmp = rFocus; tmp->next; tmp = tmp->next) ;
-            tmp->next = (Region*)calloc(1, sizeof(Region));
-            for (;;) {
-		        if (isClick) {
-                    draw_img = pimg->clone();
-		            rectangle(draw_img, rectangle_value, depth, 1, CV_AA);
-		        }
-		        imshow(WINDOW_NAME, draw_img);
-		        // qƒL[‚ª‰Ÿ‚³‚ê‚½‚çI—¹
-                key = waitKey(1);
-                if (key == 'w') {
-                    tmp->next->set(xa_g, xb_g, ya_g, yb_g);
-                    if (side == 'L') tmp->next->kind = R_TARGET;
-                    else if (side == 'R') tmp->next->kind = R_REFERENCE;
-                    break;
-                }
-                
-                else if (key == 'r') {
-                    tmp->next->set(xa_g, xb_g, ya_g, yb_g);
-                    tmp->next->kind = R_REFERENCE;
-                    break;
-                }
-
-                else if (key == 't') {
-                    tmp->next->set(xa_g, xb_g, ya_g, yb_g);
-                    tmp->next->kind = R_TARGET;
-                    break;
-                }
-
-		        else if (key == 'q') {
-        		    draw_img = pimg->clone();
-                    tmp->next = NULL;
-                    break;
-		        }
-            } 
-        }
-
+        
+        // mouse interrupt on the viewing window
+        cv::setMouseCallback(WINDOW_NAME, mouse_callback, (void*)&isClick);
+        mouse_interrupt(rFocus, pimg, isClick);
 
         // interrupt by hitting key (when focusing on viewing window)
         // TODO: sometimes it misses the input from key board.
